@@ -1,5 +1,7 @@
 ### pdf demo
 
+> [PDF.js](https://mozilla.github.io/pdf.js)
+
 #### isPdf
 
 > true 代表pdf，false 代表图片

@@ -4,21 +4,6 @@ var util = {
         js: [],
         css: []
     },
-    // 判断元素是否显示
-    isShow: function ($el) {
-        if ($el.length && $el.is(":visible")) {
-            var scroll_top = $(window).scrollTop(),
-                window_height = $(window).height(),
-                offset_top = $el.offset().top,
-                height = $el.height();
-            return (
-                scroll_top <= offset_top + height &&
-                scroll_top >= offset_top - window_height
-            );
-        } else {
-            return false;
-        }
-    },
     // 判断是否移动端
     isMobile: function () {
         var browser = navigator.userAgent;
@@ -63,6 +48,30 @@ var util = {
             }
             that.files.js.push(_src);
         }
+    },
+    // 加载css
+    css: function (_href) {
+        var that = this,
+            _v = "",
+            _css = document.createElement("link");
+        if (_href.indexOf("?v=") != -1) {
+            var arr = _href.split("?v=");
+            _href = arr[0];
+            _v = arr[1];
+        }
+        if (that.files.css.indexOf(_href) == -1) {
+            _css.rel = "stylesheet";
+            _css.type = "text/css";
+            _css.href = _href + "?v=" + that.version + _v;
+            document.getElementsByTagName("head")[0].appendChild(_css);
+            that.files.css.push(_href);
+        }
+    },
+    // 加载js和css
+    load: function (_src, callback, _href) {
+        var that = this;
+        that.js(_src, callback);
+        _href && that.css(_href);
     },
     // 将 json 转为字符串
     formatJson: function (msg) {

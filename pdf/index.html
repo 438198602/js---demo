@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PDF.js</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+        </style>
+        <script src="../js/jquery.min.js"></script>
+        <script src="../js/pdf/pdf.js"></script>
+        <script src="../js/zoom.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div id="canvas-box"></div>
+        </div>
+
+        <script src="../js/util.js"></script>
+        <script>
+            var isPdf = true;
+            var isBASE64 = true;
+        </script>
+        <script>
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "../js/pdf/pdf.worker.js";
+            var params = {
+                _pdfjs: null,
+                limit: 5,
+                total: 0,
+                current: 1,
+                isLoading: false,
+                isZoom: false
+            };
+
+            if (!util.isMobile()) {
+                $(".container").css({
+                    width: "950px",
+                    border: "1px solid #ddd",
+                    margin: "0 auto"
+                });
+            }
+
+            $(window).scroll(function () {
+                if (
+                    $(document).height() -
+                        $(window).scrollTop() -
+                        $(window).height() <
+                    50
+                ) {
+                    if (!params.isLoading) {
+                        request(params.current + 1);
+                    }
+                }
+            });
+
+            //读取pdf文件，并加载到页面中
+            function loadPDF(fileURL) {
+                var _params = {
+                    url: fileURL,
+                    rangeChunkSize: 65536,
+                    disableStream: true,
+                    disableAutoFetch: true,
+                    // 加载字体文件，避免字体显示不完成
+                    cMapUrl:
+                        "https://cdn.jsdelivr.net/npm/pdfjs-dist@" +
+                        pdfjsLib.version +
+                        "/cmaps/",
+                    cMapPacked: true
+                };
+                if (isBASE64) {
+                    _params = fileURL;
+                }
+                console.log(_params);
+                pdfjsLib.getDocument(_params).promise.then(function (pdf) {
+                    params._pdfjs = pdf;
+                    params.total = pdf.numPages;
+                    console.log("---numPages---", pdf.numPages);
+                    request(1);
+                });
+            }
+            var url = "./file/JavaScript.pdf";
+            // url = "https://pugc.banyiyi.com/api/book/getBookPdfInfo?id=1107";
+            if (isBASE64) {
+                function convertDataURIToBinary(dataURI) {
+                    var raw = window.atob(dataURI);
+                    var rawLength = raw.length;
+                    var array = new Uint8Array(new ArrayBuffer(rawLength));
+                    for (i = 0; i < rawLength; i++) {
+                        array[i] = raw.charCodeAt(i);
+                    }
+                    return array;
+                }
+                // base64-pdf.txt 文件里的内容，是pdf转的base64
+                url = "./file/base64-pdf.txt";
+                $.ajax({
+                    url: url,
+                    method: "POST",
+                    dataType: "text",
+                    data: {},
+                    success: function (res) {
+                        var txt = res;
+                        // base64 有这个开头，就不能使用 convertDataURIToBinary 方法
+                        var reg1 = /data:application\/\pdf;base64,/g;
+                        txt = txt.replace(reg1, "");
+                        // 这是 base64 里面添加的混淆，反爬
+                        var reg2 = /我的祖国/g;
+                        txt = txt.replace(reg2, "");
+                        var _res = convertDataURIToBinary(txt);
+                        loadPDF(_res);
+                    },
+                    error: function (err) {
+                        console.log(err);
+                    }
+                });
+            } else {
+                loadPDF(url);
+            }
+
+            async function request(page) {
+                params.isLoading = true;
+                var start = params.limit * (page - 1) + 1;
+                var len = params.limit * page + 1;
+                for (var p = start; p < len; p++) {
+                    if (p > params.total) {
+                        params.isLoading = false;
+                        return;
+                    }
+                    var idTemplate = "pdf-item-";
+                    //根据页码创建画布
+                    await createPdfContainer(idTemplate + p, "pdfClass");
+                    //将pdf渲染到画布上去
+                    await renderPDF(params._pdfjs, p, idTemplate + p);
+                    params.current = page;
+                    params.isLoading = false;
+                    zoomScale();
+                }
+            }
+
+            function zoomScale() {
+                setTimeout(function () {
+                    var rootWidth = $(document).width();
+                    var boxEle = $("#canvas-box");
+                    var minHeight = boxEle.height();
+                    if (boxEle.width() > rootWidth) {
+                        minHeight =
+                            (boxEle.height() * rootWidth) / boxEle.width();
+                    }
+                    $(".pinch-zoom-container").css({
+                        "min-height": minHeight
+                    });
+                }, 300);
+                // if (!util.isMobile()) return;
+                if (params.isZoom) return;
+
+                if (
+                    typeof RTP != "undefined" &&
+                    typeof RTP.PinchZoom == "function"
+                ) {
+                    var PinchZoom = new RTP.PinchZoom($("#canvas-box"), {});
+                    params.isZoom = true;
+                    setTimeout(function () {
+                        !isPdf && PinchZoom.update();
+                    }, 300);
+                }
+            }
+
+            //PDF转成图片
+            //创建 canvas
+            function createPdfContainer(id, className) {
+                var pdfContainer = document.getElementById("canvas-box");
+                var canvasEle = document.createElement("canvas");
+                canvasEle.id = id;
+                canvasEle.className = className;
+                pdfContainer.appendChild(canvasEle);
+            }
+
+            //渲染pdf
+            function renderPDF(pdf, i, id) {
+                if (!isPdf) {
+                    renderImg(i, id);
+                    return;
+                }
+
+                pdf.getPage(i).then(function (page) {
+                    var rootWidth = $(document).width();
+                    var _rootscale = 2;
+                    var viewport = page.getViewport({ scale: _rootscale });
+
+                    //  准备用于渲染的 canvas 元素
+                    var canvas = document.getElementById(id);
+                    var context = canvas.getContext("2d");
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    var scaledViewport = viewport;
+                    // if (viewport.width > rootWidth) {
+                    //     var _scale = rootWidth / viewport.width;
+                    //     scaledViewport = page.getViewport({ scale: _scale });
+                    //     canvas.height = viewport.height * _scale;
+                    //     canvas.width = viewport.width * _scale;
+                    // }
+
+                    // 将 PDF 页面渲染到 canvas 上下文中
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: scaledViewport
+                    };
+                    page.render(renderContext);
+                });
+            }
+
+            function renderImg(i, id) {
+                if (i > 5) {
+                    i = i % 5;
+                }
+                if (i == 0) {
+                    i = 5;
+                }
+                var src = "./file/" + i + ".png";
+                var img = new Image();
+                img.src = src;
+                img.onload = function () {
+                    var canvas = document.getElementById(id);
+                    var context = canvas.getContext("2d");
+                    canvas.height = img.height;
+                    canvas.width = img.width;
+
+                    //坐标(0,0)表示从此处开始绘制,相当于偏移
+                    context.drawImage(img, 0, 0);
+                };
+            }
+        </script>
+    </body>
+</html>

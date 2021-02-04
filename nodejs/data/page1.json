@@ -1,0 +1,29 @@
+{
+    "code": 200,
+    "msg": "success",
+    "data": {
+        "data": [
+            {
+                "name": "mahesh",
+                "password": "password1",
+                "profession": "teacher",
+                "id": 1
+            },
+            {
+                "name": "mahesh",
+                "password": "password1",
+                "profession": "teacher",
+                "id": 2
+            },
+            {
+                "name": "mahesh",
+                "password": "password1",
+                "profession": "teacher",
+                "id": 3
+            }
+        ],
+        "page": 1,
+        "pageSize": 3,
+        "total": 5
+    }
+}

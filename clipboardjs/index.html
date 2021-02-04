@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>clipboardjs - demo</title>
+        <script src="../js/util.js"></script>
+        <style>
+            input {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="copy_box">
+            <input
+                id="copy_text"
+                type="text"
+                readonly="readonly"
+                value="https://www.baidu.com/"
+            />
+            <button type="button" id="copy_btn">复制分享链接</button>
+        </div>
+
+        <script src="./copy.js"></script>
+        <script>
+            function copyText() {
+                var clipboard = new ClipBoard({
+                    handlerID: "copy_btn",
+                    textID: "copy_text",
+                    isAttr: false,
+                    type: "copy"
+                });
+                clipboard.attach();
+            }
+            copyText();
+        </script>
+    </body>
+</html>

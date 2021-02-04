@@ -18,6 +18,13 @@ var util = {
             return false;
         }
     },
+    // 获取IE浏览器版本号
+    getIeVersion: function () {
+        var ua = window.navigator.userAgent;
+        var is_IE = ua.match(/(rv:|msie )\d+/i);
+        var IE_Version = is_IE ? parseInt(is_IE[0].split(/:| /g)[1]) : 9;
+        return IE_Version;
+    },
     // 加载js
     js: function (_src, callback) {
         var that = this,

@@ -1,5 +1,7 @@
 ### node api
 
+> nodejs v12.19.0
+
 #### 运行
 
 1、nodejs文件夹目录下执行 node server.js

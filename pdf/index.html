@@ -85,34 +85,43 @@
             // url = "https://pugc.banyiyi.com/api/book/getBookPdfInfo?id=1107";
             if (isBASE64) {
                 function convertDataURIToBinary(dataURI) {
-                    var raw = window.atob(dataURI);
+                    var BASE64_MARKER = ";base64,";
+                    var base64Index =
+                        dataURI.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
+                    // [RFC2045]中有规定：Base64一行不能超过76字符，超过则添加回车换行符。因此需要把base64字段中的换行符、回车符给去掉。
+                    var base64 = dataURI
+                        .substring(base64Index)
+                        .replace(/[\n\r]/g, "");
+                    var raw = window.atob(base64);
                     var rawLength = raw.length;
+                    // 转换成pdf.js能直接解析的Uint8Array类型
                     var array = new Uint8Array(new ArrayBuffer(rawLength));
-                    for (i = 0; i < rawLength; i++) {
+
+                    for (var i = 0; i < rawLength; i++) {
                         array[i] = raw.charCodeAt(i);
                     }
                     return array;
                 }
-                // base64-pdf.txt 文件里的内容，是pdf转的base64
-                url = "./file/base64-pdf.txt";
+                function garbleString(arr, str) {
+                    for (var i = 0; i < arr.length; i++) {
+                        str = str.replace(RegExp(arr[i], "g"), "");
+                    }
+                    return str;
+                }
+                // base64-pdf.json 文件里的内容，是pdf转的base64
+                url = "./file/base64-pdf.json";
                 $.ajax({
                     url: url,
                     method: "POST",
-                    dataType: "text",
-                    data: {},
                     success: function (res) {
-                        var txt = res;
-                        // base64 有这个开头，就不能使用 convertDataURIToBinary 方法
-                        var reg1 = /data:application\/\pdf;base64,/g;
-                        txt = txt.replace(reg1, "");
-                        // 这是 base64 里面添加的混淆，反爬
-                        var reg2 = /我的祖国/g;
-                        txt = txt.replace(reg2, "");
-                        var _res = convertDataURIToBinary(txt);
-                        loadPDF(_res);
+                        var txt = res.data.content;
+                        var regArr = res.data.reg;
+                        txt = garbleString(regArr, txt);
+                        txt = convertDataURIToBinary(txt);
+                        loadPDF(txt);
                     },
                     error: function (err) {
-                        console.log(err);
+                        throw err;
                     }
                 });
             } else {

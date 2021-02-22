@@ -4,6 +4,7 @@ var path = require("path");
 var fs = require("fs");
 var fsutil = require("./fs-util");
 const os = require("os");
+var urllib = require("url");
 
 ///获取本机ip///
 function getIPAdress() {
@@ -78,7 +79,15 @@ var server = http.createServer(function (request, response) {
             "content-type": "application/json; charset:utf-8",
             "Access-Control-Allow-Origin": allowOrigin
         });
-        response.write(result);
+        var params = urllib.parse(request.url, true);
+        if (params.query && params.query.callback) {
+            // jsonp
+            var _result = params.query.callback + "(" + result + ")";
+            response.write(_result);
+        } else {
+            // 普通的json
+            response.write(result);
+        }
     } else {
         response.writeHeader(404, {
             "content-type": "text/html; charset=utf-8",

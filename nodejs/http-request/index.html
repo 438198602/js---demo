@@ -4,8 +4,8 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
-        <script src="../js/jquery.min.js"></script>
-        <script src="../js/util.js"></script>
+        <script src="../../js/jquery.min.js"></script>
+        <script src="../../js/util.js"></script>
         <style>
             * {
                 margin: 0;
@@ -48,42 +48,42 @@
         </div>
 
         <script>
-            $(".container button").each(function () {
-                $(this).on("click", function () {
-                    var _filename = $(this).attr("data-name");
-                    var _params = $(this).attr("data-params") || {};
-                    var _pEle = $(this).next("p.content");
-                    _pEle.html("加载中……");
+            $('.container button').each(function () {
+                $(this).on('click', function () {
+                    var _filename = $(this).attr('data-name');
+                    var _params = $(this).attr('data-params') || {};
+                    var _pEle = $(this).next('p.content');
+                    _pEle.html('加载中……');
                     _fetch(_filename, _params, _pEle);
                 });
             });
 
             function _fetch(url, params, ele) {
-                url = "http://localhost:3333/" + url;
+                url = 'http://localhost:3333/' + url;
                 params = params || {};
 
-                var urlArr = url.split("?");
-                var dataType = "json";
+                var urlArr = url.split('?');
+                var dataType = 'json';
                 if (urlArr.length > 1) {
-                    var _dataTypeArr = urlArr[1].split("=");
+                    var _dataTypeArr = urlArr[1].split('=');
                     if (_dataTypeArr[1]) {
                         dataType = _dataTypeArr[1];
                     }
                 }
-                if (dataType == "txt") {
-                    dataType = "text";
+                if (dataType == 'txt') {
+                    dataType = 'text';
                 }
 
                 $.ajax({
                     url: url,
-                    method: "POST",
+                    method: 'POST',
                     dataType: dataType,
                     data: params,
                     success: function (res) {
                         console.log(res);
                         var _data = res;
                         switch (dataType) {
-                            case "json":
+                            case 'json':
                                 _data = util.formatJson(res);
                                 break;
                             default:
@@ -93,7 +93,7 @@
                     },
                     error: function (err) {
                         console.log(err);
-                        ele.html("请求失败");
+                        ele.html('请求失败');
                     }
                 });
             }

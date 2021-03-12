@@ -11,7 +11,7 @@ const puppeteer = require('puppeteer'),
 // 对比网页和设计图差异
 async function ImageDiff(options) {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: true, // 显示浏览器界面，默认true 不显示
         executablePath: 'C:/Users/ycl/Downloads/chrome-win/chrome.exe',
         defaultViewport: {
             width: options.viewport.width || 375,
@@ -26,6 +26,9 @@ async function ImageDiff(options) {
 
     // 由于页面数据是异步的，所以等待几秒，等待异步请求完毕，页面渲染完毕
     options.waitTime && (await page.waitForTimeout(options.waitTime));
+
+    // 模拟设备
+    await page.emulate(puppeteer.devices['iPhone 6']);
 
     const html = await page.evaluate(async () => {
         var list = document.querySelectorAll('div.news-list > ul > li > a');

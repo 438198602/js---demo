@@ -28,6 +28,13 @@ function delDir(path) {
     }
 }
 
+// 写入文件
+function writeFile(path, data) {
+    fs.writeFile(path, data, {}, function (err) {
+        err && console.log('---写入失败---', err);
+    });
+}
+
 (async () => {
     const browser = await puppeteer.launch({
         headless: true,
@@ -40,11 +47,11 @@ function delDir(path) {
     const page = await browser.newPage();
 
     let filePath = 'dist';
-    await delDir(filePath);
+    // await delDir(filePath);
     await addDir(filePath);
 
     // await book118();
-    await zhihu();
+    await search();
 
     await page.screenshot({
         path: filePath + '/screenshot.png'
@@ -71,15 +78,21 @@ function delDir(path) {
         await loginIframe.waitForTimeout(500);
     }
 
-    async function zhihu() {
+    async function search() {
         let args = process.argv.splice(2);
         if (!args.length) {
             console.log('请输入参数！格式为：nodejs puppeteer.js [关键字]');
             return;
         }
 
-        await page.goto('https://www.zhihu.com/search?type=content&q=' + args[0]);
+        await page.goto('https://www.baidu.com/s?wd=' + args[0]);
         await page.emulate(puppeteer.devices['iPhone 6']);
         await page.waitForTimeout(300);
+
+        const html = await page.evaluate(() => {
+            // return document.getElementsByTagName('html')[0].outerHTML;
+            return document.body.innerHTML;
+        });
+        writeFile(filePath + '/search.html', html);
     }
 })();

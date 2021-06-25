@@ -1,9 +1,11 @@
 ### nodejs
 
+>nodemon 监听代码变动，自动重启，无需手动重启  
+`npm install -g nodemon`
 
 #### node api
 
-> nodejs v12.19.0
+> node > 12
 
 1、http-request 文件夹目录下执行 node server.js
 
